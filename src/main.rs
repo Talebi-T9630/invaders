@@ -6,7 +6,7 @@ use crossterm::terminal::{EnterAlternateScreen,LeaveAlternateScreen};
 use crossterm::cursor::{Hide,Show};
 use crossterm::event;
 use crossterm::event::{Event,KeyCode};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use battle_ship_game::frame;
 use battle_ship_game::frame::Drawable;
 use battle_ship_game::render;
@@ -53,9 +53,12 @@ fn main() -> Result <(), Box<dyn Error>> {
 
     //Game loop
     let mut player= Player::new();
+    let mut instant = Instant::now();
         'gameloop: loop{
             //per - frame initialization
             let mut crr_frame= frame::new_frame();
+            let delta = instant.elapsed();
+            instant= Instant::now();
               
             //input
             while event::poll(Duration::default())?{
@@ -63,6 +66,11 @@ fn main() -> Result <(), Box<dyn Error>> {
                     match key_event.code{
                         KeyCode::Left => player.move_left(),
                         KeyCode::Right=> player.move_right(),
+                        KeyCode::Char(' ') | KeyCode::Enter =>{
+                            if player.shoot(){
+                                audio.play("pew");
+                            }
+                        }
                         KeyCode::Esc | KeyCode::Char('q') =>{
                             audio.play("lose");
                             break 'gameloop;
@@ -71,6 +79,9 @@ fn main() -> Result <(), Box<dyn Error>> {
                     }
                 }
             }
+
+            //updates
+            player.update(delta);
 
             //draw and render 
             player.draw(&mut crr_frame);
