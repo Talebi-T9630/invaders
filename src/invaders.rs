@@ -1,6 +1,6 @@
 use rusty_time::timer::Timer;
 use std::time::Duration;
-use crate::{NUM_COLS, NUM_ROWS};
+use crate::{frame::Drawable, NUM_COLS, NUM_ROWS};
 use std::cmp::max;
 
 pub struct Invader{
@@ -19,7 +19,7 @@ impl Invaders{
         let mut  army = Vec::new();
         for x in 0..NUM_COLS{
             for y in 0..NUM_ROWS{
-                if  x > 1
+                if  (x > 1)
                     && (x< NUM_COLS-2)
                     && (y>0)
                     && (y<NUM_ROWS/2)
@@ -33,12 +33,12 @@ impl Invaders{
             Self {
                 army,
                 move_timer:Timer::from_millis(2000),
-                direction: 1,
+                direction: 1
             }
         
-        }
+    }
 
-        pub fn update(&mut self, delta:Duration)->bool{
+    pub fn update(&mut self, delta:Duration)->bool{
             self.move_timer.update(delta);
             if self.move_timer.ready{
                 self.move_timer.reset();
@@ -76,4 +76,18 @@ impl Invaders{
             return false;
         }
 
+    }
+
+
+    impl Drawable for Invaders{
+        fn draw(&self, frame: &mut crate::frame::Frame) {
+            for invader in self.army.iter(){
+                frame[invader.x][invader.y] = if (self.move_timer.time_left.as_secs_f32() 
+                 /self.move_timer.duration.as_secs_f32()) > 0.5{
+                    "x"
+                }else{
+                    "+"
+                }
+            }
+        }
     }

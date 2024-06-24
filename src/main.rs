@@ -1,4 +1,5 @@
 use std::error::Error;
+use battle_ship_game::invaders::Invaders;
 use rusty_audio::Audio;
 use std::io;
 use crossterm::{terminal, ExecutableCommand};
@@ -54,6 +55,8 @@ fn main() -> Result <(), Box<dyn Error>> {
     //Game loop
     let mut player= Player::new();
     let mut instant = Instant::now();
+    let mut invaders: Invaders = Invaders::new();
+
         'gameloop: loop{
             //per - frame initialization
             let mut crr_frame= frame::new_frame();
@@ -82,9 +85,18 @@ fn main() -> Result <(), Box<dyn Error>> {
 
             //updates
             player.update(delta);
+           if invaders.update(delta){
+            audio.play("move");
+           }
 
             //draw and render 
-            player.draw(&mut crr_frame);
+            //the drawing lines are being replaved with the generic drawable line
+            // player.draw(&mut crr_frame);
+            // invaders.draw(&mut crr_frame);
+            let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+            for drawable in drawables{
+                drawable.draw(&mut crr_frame)
+            }
             let _ = render_tx.send(crr_frame);
             thread::sleep(Duration::from_millis(1));
 
