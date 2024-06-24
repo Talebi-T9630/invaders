@@ -13,10 +13,10 @@ In this project, many of the fundamental Rust concepts are implemented. To name 
  - Ownership and References and Borrowing
  - Structs and Traits
  - Threats and closures
- - Enum
+ - Enums
 
 
-## HOW TO THIS PROJECT
+## HOW TO RUN THIS PROJECT
 It is straightforward to run this project. First Clone the project on your device. Then ensure you have RUST installed:
 
 for Windows users:
