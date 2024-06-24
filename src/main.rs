@@ -7,8 +7,12 @@ use crossterm::cursor::{Hide,Show};
 use crossterm::event;
 use crossterm::event::{Event,KeyCode};
 use std::time::Duration;
-use crate::frame::Frame;
-use create::render;
+use battle_ship_game::frame;
+use battle_ship_game::frame::Drawable;
+use battle_ship_game::render;
+use battle_ship_game::player::Player;
+use std::sync::mpsc;
+use std::thread;
 
 
 fn main() -> Result <(), Box<dyn Error>> {
@@ -31,8 +35,8 @@ fn main() -> Result <(), Box<dyn Error>> {
     //Render Loop in a seperate thread
     //setting up channel
     let(render_tx,render_rx)=mpsc::channel();
-    let render_handle = threat::spawn(move || {
-        let mut last_frame = Frame::new_frame();
+    let render_handle = thread::spawn(move || {
+        let mut last_frame = frame::new_frame();
         let mut stdout = io::stdout();
         render::render(&mut stdout, &last_frame, &last_frame, true);
 
@@ -44,17 +48,21 @@ fn main() -> Result <(), Box<dyn Error>> {
             render::render(&mut stdout, &last_frame, &crr_frame, false);
             last_frame = crr_frame;
         }
-    })
+    });
 
 
     //Game loop
+    let mut player= Player::new();
         'gameloop: loop{
-            //per - frame init
-            
+            //per - frame initialization
+            let mut crr_frame= frame::new_frame();
+              
             //input
             while event::poll(Duration::default())?{
                 if let Event::Key(key_event) = event::read()?{
                     match key_event.code{
+                        KeyCode::Left => player.move_left(),
+                        KeyCode::Right=> player.move_right(),
                         KeyCode::Esc | KeyCode::Char('q') =>{
                             audio.play("lose");
                             break 'gameloop;
@@ -63,11 +71,19 @@ fn main() -> Result <(), Box<dyn Error>> {
                     }
                 }
             }
+
+            //draw and render 
+            player.draw(&mut crr_frame);
+            let _ = render_tx.send(crr_frame);
+            thread::sleep(Duration::from_millis(1));
+
         }
 
 
 
     //Clean up here
+    drop(render_tx);
+    render_handle.join().unwrap();
     audio.wait();
     stdout.execute(Show)?;
     stdout.execute(LeaveAlternateScreen)?;
